@@ -1,11 +1,9 @@
 <?php
 
-include 'Plugin.php';
-
 /**
  * 极验验证插件执行
  */
-class Geetest_Action implements Widget_Interface_Do
+class Geetest_Action extends Typecho_Widget implements Widget_Interface_Do
 {
     public function execute()
     {
@@ -13,6 +11,15 @@ class Geetest_Action implements Widget_Interface_Do
 
     public function action()
     {
-        Geetest_Plugin::responseCaptchaData();
+        $this->on($this->request->is('do=ajaxResponseCaptchaData'))->ajaxResponseCaptchaData();
+    }
+
+    public function ajaxResponseCaptchaData()
+    {
+        if (!$this->request->isAjax()) {
+            $this->response->redirect('/');
+        }
+
+        Typecho_Plugin::factory('Geetest')->responseCaptchaData();
     }
 }

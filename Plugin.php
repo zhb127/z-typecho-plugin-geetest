@@ -1,9 +1,10 @@
 <?php
+if (!defined('__TYPECHO_ROOT_DIR__')) exit;
 
 include 'lib/class.geetestlib.php';
 
 /**
- * 极验验证，默认添加到登录页面
+ * 极验验证插件，用于用户登录
  *
  * @package Geetest
  * @author 菠菜
@@ -13,10 +14,6 @@ include 'lib/class.geetestlib.php';
  */
 class Geetest_Plugin implements Typecho_Plugin_Interface
 {
-    private static $_routeName = 'ajax_geetest_captcha_data';
-
-    private static $_routeUrl = '/ajax/geetest_captcha_data';
-
     /**
      * 激活插件方法,如果激活失败,直接抛出异常
      *
@@ -26,8 +23,9 @@ class Geetest_Plugin implements Typecho_Plugin_Interface
      */
     public static function activate()
     {
-        // 添加插件路由
-        Helper::addRoute(self::$_routeName, self::$_routeUrl, 'Geetest_Action', 'action');
+        // 添加插件动作
+        // /action/geetest?do=ajaxResponseCaptchaData
+        Helper::addAction('geetest', 'Geetest_Action');
 
         // 注册后台底部结束钩子
         Typecho_Plugin::factory('admin/footer.php')->end = array(__CLASS__, 'renderCaptcha');
@@ -38,6 +36,7 @@ class Geetest_Plugin implements Typecho_Plugin_Interface
         // 暴露插件函数（用于在自定义表单中渲染极验验证，以及在自定义逻辑中调用极验验证）
         Typecho_Plugin::factory('Geetest')->renderCaptcha = array(__CLASS__, 'renderCaptcha');
         Typecho_Plugin::factory('Geetest')->verifyCaptcha = array(__CLASS__, 'verifyCaptcha');
+        Typecho_Plugin::factory('Geetest')->responseCaptchaData = array(__CLASS__, 'responseCaptchaData');
     }
 
     /**
@@ -50,7 +49,7 @@ class Geetest_Plugin implements Typecho_Plugin_Interface
      */
     public static function deactivate()
     {
-        Helper::removeRoute(self::$_routeName);
+        Helper::removeAction('geetest');
     }
 
     /**
@@ -152,6 +151,8 @@ class Geetest_Plugin implements Typecho_Plugin_Interface
 EOF;
         }
 
+        $ajaxUri = '/action/geetest?do=ajaxResponseCaptchaData';
+
         echo <<<EOF
         <style rel="stylesheet">
         #gt-captcha { line-height: 44px; }
@@ -193,7 +194,7 @@ EOF;
         };
         
         $.ajax({
-            url: "/ajax/geetest_captcha_data?t=" + (new Date()).getTime(),
+            url: "{$ajaxUri}&t=" + (new Date()).getTime(),
             type: "get",
             dataType: "json",
             success: function (data) {
